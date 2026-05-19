@@ -1,0 +1,35 @@
+#lang racket
+(require "utils.rkt" "prop.rkt")
+(define ((allsets n) s)
+  (define (a n s l)
+    (cond ((= n 0) '(()))
+          ((< l n) '())
+          ((= l n) (list s))
+          (else
+           (append (map (curry cons (car s))
+                        (a (- n 1) (cdr s) (- l 1)))
+                   (a n (cdr s) (- l 1))))))
+  (a n s (length s)))
+(define (ramsey s t n)
+  (define v* (range n))
+  (define (sub x)
+    (map (allsets 2)
+         ((allsets x) v*)))
+  (define yes* (sub s))
+  (define no* (sub t))
+  (define (e p)
+    (string->symbol
+     (apply format "p_~s_~s" p)))
+  (make-disj
+   (append (map (lambda (p*)
+                  (make-conj (map e p*)))
+                yes*)
+           (map (lambda (p*)
+                  (make-conj (map (lambda (p)
+                                    `(not ,(e p)))
+                                  p*)))
+                no*))))
+;; > (dplltaut? (ramsey 3 3 5))
+;; #f
+;; > (dplltaut? (ramsey 3 3 6))
+;; #t
